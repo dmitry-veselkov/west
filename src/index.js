@@ -32,6 +32,15 @@ class Creature extends Card {
         super(name, power);
     }
 
+    // get currentPower() {
+    //     return super.currentPower;
+    // }
+    //
+    // set currentPower(value) {
+    //     super.currentPower = Math.min(value, this.maxPower);
+    // }
+
+
     getDescriptions() {
         return [
             getCreatureDescription(this),
@@ -121,7 +130,7 @@ class Rogue extends Creature {
         const oppositeCard = oppositePlayer.table[position];
         const oppCardPrototype = Object.getPrototypeOf(oppositeCard);
         for (const prop of Object.getOwnPropertyNames(oppCardPrototype)) {
-            if (prop in rogueDeleteProps) {
+            if (rogueDeleteProps.includes(prop)) {
                 delete oppCardPrototype[prop];
             }
         }
@@ -131,14 +140,43 @@ class Rogue extends Creature {
     }
 }
 
+class Brewer extends Duck {
+    constructor(name = 'Пивовар', power = 2) {
+        super(name, power);
+    }
+
+    attack(gameContext, continuation) {
+        const taskQueue = new TaskQueue();
+        const {currentPlayer, oppositePlayer} = gameContext;
+
+        const allCards = currentPlayer.table.concat(oppositePlayer.table);
+
+        for (const card of allCards) {
+            if (isDuck(card)) {
+                taskQueue.push(onDone => {
+                    card.maxPower += 1;
+                    card.currentPower = Math.min(card.currentPower + 2, card.maxPower);
+                    card.updateView();
+                    card.view.signalHeal(onDone);
+                });
+            }
+        }
+
+        taskQueue.push(onDone => super.attack(gameContext, onDone));
+        taskQueue.continueWith(continuation);
+    }
+
+}
+
 const seriffStartDeck = [
     new Duck(),
-    new Rogue(),
+    new Brewer(),
 ];
 const banditStartDeck = [
     new Dog(),
     new Dog(),
-    new Duck(),
+    new Dog(),
+    new Dog(),
 ];
 
 // Создание игры.

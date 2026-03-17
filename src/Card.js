@@ -76,6 +76,7 @@ const Card = function () {
             const oppositeCard = oppositePlayer.table[position];
 
             if (oppositeCard) {
+                console.log(`${this.name}, ${this.currentPower}`)
                 this.dealDamageToCreature(this.currentPower, oppositeCard, gameContext, onDone);
             } else {
                 this.dealDamageToPlayer(1, gameContext, onDone);
