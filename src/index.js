@@ -32,15 +32,6 @@ class Creature extends Card {
         super(name, power);
     }
 
-    // get currentPower() {
-    //     return super.currentPower;
-    // }
-    //
-    // set currentPower(value) {
-    //     super.currentPower = Math.min(value, this.maxPower);
-    // }
-
-
     getDescriptions() {
         return [
             getCreatureDescription(this),
@@ -113,6 +104,60 @@ class Duck extends Creature {
     }
 }
 
+
+class Lad extends Dog {
+    constructor(name = 'Браток', power = 2) {
+        super(name, power)
+    }
+
+    static getInGameCount() {
+        return this.inGameCount || 0;
+    }
+
+    static setInGameCount(value) {
+        this.inGameCount = value;
+    }
+
+    static getBonus() {
+        return this.inGameCount * (this.inGameCount + 1) / 2
+    }
+
+    doAfterComingIntoPlay(gameContext, continuation) {
+        Lad.setInGameCount(Lad.getInGameCount() + 1)
+
+        super.doAfterComingIntoPlay(gameContext, continuation)
+    }
+
+    doBeforeRemoving(continuation) {
+        Lad.setInGameCount(Lad.getInGameCount() - 1)
+
+        super.doBeforeRemoving(continuation)
+    }
+
+    modifyDealedDamageToCreature(value, toCard, gameContext, continuation) {
+        continuation(value + Lad.getBonus());
+    }
+
+    modifyTakenDamage(value, fromCard, gameContext, continuation) {
+        this.view.signalAbility(() => {
+            continuation(value - Lad.getBonus());
+        });
+    }
+
+    getDescriptions() {
+        const baseDescriptions = super.getDescriptions();
+
+        if (Lad.prototype.hasOwnProperty('modifyDealedDamageToCreature') ||
+            Lad.prototype.hasOwnProperty('modifyTakenDamage')) {
+            return [...baseDescriptions, 'Чем их больше, тем они сильнее'];
+        }
+
+        return baseDescriptions;
+
+    }
+}
+
+
 const rogueDeleteProps = [
     'modifyDealedDamageToCreature',
     'modifyDealedDamageToPlayer',
@@ -126,11 +171,14 @@ class Rogue extends Creature {
 
     attack(gameContext, continuation) {
         const {currentPlayer, oppositePlayer, position, updateView} = gameContext;
-
         const oppositeCard = oppositePlayer.table[position];
         const oppCardPrototype = Object.getPrototypeOf(oppositeCard);
+
         for (const prop of Object.getOwnPropertyNames(oppCardPrototype)) {
-            if (rogueDeleteProps.includes(prop)) {
+            if (rogueDeleteProps.includes(prop) && oppCardPrototype.hasOwnProperty(prop)) {
+                if (!this.hasOwnProperty(prop)) {
+                    this[prop] = oppCardPrototype[prop];
+                }
                 delete oppCardPrototype[prop];
             }
         }
