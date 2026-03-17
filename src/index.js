@@ -41,47 +41,61 @@ class Creature extends Card {
 }
 
 
+class Gatling extends Creature {
+    constructor(name = 'Гатлинг', power = 6) {
+        super(name, power);
+    }
+
+    attack(gameContext, continuation) {
+        const taskQueue = new TaskQueue();
+        const {currentPlayer, oppositePlayer, position, updateView} = gameContext;
+
+        taskQueue.push(onDone => this.view.showAttack(onDone));
+
+        for (const oppositeCard of oppositePlayer.table) {
+            taskQueue.push(onDone => {
+                if (oppositeCard) {
+                    this.dealDamageToCreature(2, oppositeCard, gameContext, onDone);
+                }
+            });
+        }
+
+        taskQueue.continueWith(continuation);
+    }
+}
+
+
 class Dog extends Creature {
     constructor(name = 'Пес-бандит', power = 3) {
-        super(name, power); 
+        super(name, power);
     }
 }
 
 class Duck extends Creature {
-     constructor(name = 'Мирная утка', power = 2) {
+    constructor(name = 'Мирная утка', power = 2) {
         super(name, power);
-     }
+    }
 
-     quacks() {
+    quacks() {
         console.log('quack');
     }
 
-    swims () {
+    swims() {
         console.log('float: both;')
     }
 }
 
-// // Колода Шерифа, нижнего игрока.
-// const seriffStartDeck = [
-//     new Duck('Мирный житель', 2),
-//     new Duck('Мирный житель', 2),
-//     new Duck('Мирный житель', 2),
-// ];
-//
-// // Колода Бандита, верхнего игрока.
-// const banditStartDeck = [
-//     new Dog('Бандит', 3),
-// ];
-
+// Колода Шерифа, нижнего игрока.
 const seriffStartDeck = [
-    new Duck(),
-    new Duck(),
-    new Duck(),
-];
-const banditStartDeck = [
-    new Dog(),
+    new Duck('Мирный житель', 2),
+    new Duck('Мирный житель', 2),
+    new Duck('Мирный житель', 2),
 ];
 
+// Колода Бандита, верхнего игрока.
+const banditStartDeck = [
+    new Dog('Бандит', 3),
+];
 
 // Создание игры.
 const game = new Game(seriffStartDeck, banditStartDeck);
