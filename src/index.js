@@ -104,16 +104,41 @@ class Duck extends Creature {
     }
 }
 
-// Колода Шерифа, нижнего игрока.
+const rogueDeleteProps = [
+    'modifyDealedDamageToCreature',
+    'modifyDealedDamageToPlayer',
+    'modifyTakenDamage',
+]
+
+class Rogue extends Creature {
+    constructor(name = 'Изгой', power = 5) {
+        super(name, power);
+    }
+
+    attack(gameContext, continuation) {
+        const {currentPlayer, oppositePlayer, position, updateView} = gameContext;
+
+        const oppositeCard = oppositePlayer.table[position];
+        const oppCardPrototype = Object.getPrototypeOf(oppositeCard);
+        for (const prop of Object.getOwnPropertyNames(oppCardPrototype)) {
+            if (prop in rogueDeleteProps) {
+                delete oppCardPrototype[prop];
+            }
+        }
+
+        updateView();
+        super.attack(gameContext, continuation);
+    }
+}
+
 const seriffStartDeck = [
     new Duck(),
-    new Duck(),
-    new Duck(),
+    new Rogue(),
 ];
-
-// Колода Бандита, верхнего игрока.
 const banditStartDeck = [
-    new Trasher(),
+    new Dog(),
+    new Dog(),
+    new Duck(),
 ];
 
 // Создание игры.
